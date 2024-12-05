@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fashion Recommendation App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .recommendation-container {
+            text-align: center;
+            max-width: 600px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #recommendedImage {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+        .filter-container {
+            margin-bottom: 15px;
+        }
+        .interaction-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .similarity-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .similarity-indicator {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="recommendation-container">
+        <div class="filter-container">
+            <label>Colors:</label>
+            <input type="text" id="colorFilter" placeholder="Blue, Green, etc">
+            <label>Categories:</label>
+            <input type="text" id="categoryFilter" placeholder="Below the Knee, etc">
+            <button onclick="fetchRecommendations()">Get Recommendations</button>
+        </div>
+        <img id="recommendedImage" src="" alt="Recommended Product">
+        <div id="similarityInfo"></div>
+        <div class="interaction-buttons">
+            <button onclick="handleUserInteraction('dislike')">👎 Dislike</button>
+            <button onclick="handleUserInteraction('like')">👍 Like</button>
+        </div>
+    </div>
+    <script>
+        let currentUserId = "abdullah";
+        let currentProductId = null;
+        let recommendationQueue = [];
+        let colors = [];
+        let categories = [];
+
+        function parseFilters() {
+            colors = document.getElementById('colorFilter').value
+                .split(',')
+                .map(color => color.trim())
+                .filter(color => color !== '');
+            categories = document.getElementById('categoryFilter').value
+                .split(',')
+                .map(category => category.trim())
+                .filter(category => category !== '');
+        }
+
+        async function fetchRecommendations() {
+            parseFilters();
+            try {
+                const response = await fetch('http://localhost:8000/get-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUserId,  // Pass existing user_id if available
+                        colors: colors,
+                        categories: categories,
+                        num_recommendations: 10
+                    })
+                });
+                const data = await response.json();
+                
+                // Set recommendation queue
+                recommendationQueue = data.recommendations;
+                
+                // Display first recommendation
+                if (recommendationQueue.length > 0) {
+                    displayRecommendation(recommendationQueue.shift());
+                } else {
+                    alert('No recommendations found');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to fetch recommendations');
+            }
+        }
+
+        function displayRecommendation(recommendation) {
+            const img = document.getElementById('recommendedImage');
+            const similarityInfo = document.getElementById('similarityInfo');
+            
+            img.src = recommendation.image_href;
+            currentProductId = recommendation.product_id;
+
+            // Display similarity score if available
+            if (recommendation.similarity_score !== undefined) {
+                const similarityPercentage = Math.round(recommendation.similarity_score * 100);
+                similarityInfo.innerHTML = `
+                    <p>Recommendation Strength: ${similarityPercentage}%</p>
+                    <div class="similarity-bar">
+                        <div class="similarity-indicator" style="width: ${similarityPercentage}%"></div>
+                    </div>
+                `;
+            } else {
+                similarityInfo.innerHTML = '<p>Diverse Recommendation</p>';
+            }
+        }
+
+        async function handleUserInteraction(reaction) {
+            if (!currentUserId || !currentProductId) {
+                alert('Please fetch recommendations first');
+                return;
+            }
+
+            try {
+                // Record interaction
+                await fetch('http://localhost:8000/record-interaction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        product_id: currentProductId,
+                        reaction: reaction
+                    })
+                });
+
+                // If we have more recommendations in the queue, show next
+                if (recommendationQueue.length > 0) {
+                    displayRecommendation(recommendationQueue.shift());
+                } else {
+                    // If queue is empty, fetch more recommendations
+                    await fetchRecommendations();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to process interaction');
+            }
+        }
+
+        // Optional: Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight') {
+                handleUserInteraction('like');
+            } else if (event.key === 'ArrowLeft') {
+                handleUserInteraction('dislike');
+            }
+        });
+    </script>
+</body>
+</html>

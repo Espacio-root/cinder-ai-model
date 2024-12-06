@@ -1,7 +1,7 @@
 import json
 
 def modify_hrefs():
-    href_file = "href_data.json"
+    href_file = "./data/href_data.json"
 
     try:
         with open(href_file, "r") as file:
@@ -11,7 +11,7 @@ def modify_hrefs():
         exit(1)
 
     with open("href_data_2.json", "w") as file:
-        json.dump({"Women's Clothing": href_data}, file)
+        json.dump({"Men's Clothing": href_data}, file)
 
 
 def count_data():
@@ -60,4 +60,5 @@ def get_unique_categories_and_colors():
     #         s.add(k)
     # print(s)
 
-get_unique_categories_and_colors()
+# get_unique_categories_and_colors()
+modify_hrefs()

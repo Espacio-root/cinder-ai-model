@@ -100,14 +100,14 @@
                         user_id: currentUserId,  // Pass existing user_id if available
                         colors: colors,
                         categories: categories,
-                        num_recommendations: 10
+                        num_recommendations: 5
                     })
                 });
                 const data = await response.json();
-                
+
                 // Set recommendation queue
                 recommendationQueue = data.recommendations;
-                
+
                 // Display first recommendation
                 if (recommendationQueue.length > 0) {
                     displayRecommendation(recommendationQueue.shift());
@@ -125,7 +125,7 @@
             const similarityInfo = document.getElementById('similarityInfo');
             
             img.src = recommendation.image_href;
-            currentProductId = recommendation.product_id;
+            currentProductId = recommendation.id;
 
             // Display similarity score if available
             if (recommendation.similarity_score !== undefined) {
@@ -160,9 +160,8 @@
                         reaction: reaction
                     })
                 });
-
                 // If we have more recommendations in the queue, show next
-                if (recommendationQueue.length > 0) {
+                if (recommendationQueue.length > 2) {
                     displayRecommendation(recommendationQueue.shift());
                 } else {
                     // If queue is empty, fetch more recommendations

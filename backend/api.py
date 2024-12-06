@@ -44,12 +44,11 @@ async def get_recommendations(request: RecommendationRequest):
     """
     if rec_engine is None:
         raise HTTPException(status_code=500, detail="Recommendation engine not initialized")
-    
+
     try:
-        
         # Check if user is being tracked
         user_tracker = rec_engine.user_trackers.get(request.user_id)
-        
+
         if user_tracker and user_tracker.compute_preference_vector() is not None:
             # User has interactions, get personalized recommendations
             recommendations = rec_engine.get_recommendations(
@@ -66,7 +65,7 @@ async def get_recommendations(request: RecommendationRequest):
                 color_filter=request.colors,
                 category_filter=request.categories
             )
-        
+
         return {
             "recommendations": recommendations
         }
@@ -80,15 +79,15 @@ async def record_user_interaction(request: UserInteractionRequest):
     """
     if rec_engine is None:
         raise HTTPException(status_code=500, detail="Recommendation engine not initialized")
-    
     try:
+
         # Record user interaction
         rec_engine.record_user_interaction(
             request.user_id, 
             request.product_id,
             request.reaction
         )
-        
+
         return {"status": "Interaction recorded successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

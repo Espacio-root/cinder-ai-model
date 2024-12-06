@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Load input data
-input_file = "../scraper/processed_data.json"
+input_file = r"/home/espacio/projects/cinder/scraper/data/womens_processed_data.json"
 with open(input_file, "r") as file:
     image_metadata = json.load(file)
 
@@ -56,26 +56,33 @@ def get_image_embedding(image_url):
             time.sleep(5)
 
 # Embed images and store metadata
-image_embeddings = []
-for i, item in enumerate(image_metadata):
+image_embeddings = {}
+i = 0
+for k,v in image_metadata.items():
     try:
-        embedding = get_image_embedding(item['image_href'])
-        image_embeddings.append({'embedding': embedding, **item})
+        embedding = get_image_embedding(v['image_href'])
+        image_embeddings[k] = {'faiss-id': i,'embedding': embedding, **v}
+        i+=1
 
         if (i + 1) % 100 == 0:
             print(f"{i+1} images embedded")
 
     except Exception as e:
-        print(f"Failed to process image {item['image_href']}: {e}")
+        print(f"Failed to process image {v['image_href']}: {e}")
 
 # Optional: Save embeddings to a file
 output_file = "image_embeddings.json"
 with open(output_file, "w") as f:
     # Convert numpy arrays to lists for JSON serialization
     serializable_embeddings = [
-        {**entry, 'embedding': entry['embedding'].tolist()} 
+        {**entry, 'embedding': entry['embedding'].tolist()}
         for entry in image_embeddings
     ]
+    json.dump(serializable_embeddings, f)
+
+output_file = "product_metadata.json"
+with open(output_file, "w") as f:
+    image_embeddings = {k:v for k,v in image_embeddings.items() if k != "embedding"}
     json.dump(serializable_embeddings, f)
 
 print(f"Saved {len(image_embeddings)} image embeddings to {output_file}")

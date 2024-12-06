@@ -30,7 +30,7 @@ try:
 
     # Find the search bar and input the product name
     search_bar = driver.find_element(By.ID, "twotabsearchtextbox")
-    search_bar.send_keys("women's dress")
+    search_bar.send_keys("men's clothing")
     search_bar.send_keys(Keys.RETURN)
 
     # Wait for the categories to load

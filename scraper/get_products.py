@@ -12,8 +12,8 @@ options.add_argument("user-data-dir=/home/espacio/.config/chromium/Profile 1")
 driver = webdriver.Chrome(options=options)
 
 # Load href_data.json
-href_file = "href_data.json"
-output_file = "product_data.json"
+href_file = "./data/href_data.json"
+output_file = "./data/product_data.json"
 
 def get_color():
     try:
